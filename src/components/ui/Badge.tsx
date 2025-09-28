@@ -9,7 +9,8 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
     | "outline"
     | "success"
     | "warning"
-    | "danger";
+    | "danger"
+    | "info";
   size?: "sm" | "md" | "lg";
   gradient?: boolean;
   pulse?: boolean;
@@ -54,6 +55,9 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
       danger: gradient
         ? "bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg border border-red-400/30"
         : "bg-red-100 text-red-700 border border-red-200 shadow-sm",
+      info: gradient
+        ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg border border-cyan-400/30"
+        : "bg-cyan-100 text-cyan-700 border border-cyan-200 shadow-sm",
     };
 
     const pulseClass = pulse ? "animate-pulse" : "";

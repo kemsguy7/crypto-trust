@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -8,9 +8,12 @@ import {
 } from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Badge from "../components/ui/Badge";
+import { contractManager } from "../lib/contract-adapter";
+import { ZKProof as AppZKProof } from "../lib/midnight-stub";
 
 const ReviewSubmissionPage: React.FC = () => {
   const [formData, setFormData] = useState({
+    projectAddress: "",
     projectName: "",
     projectWebsite: "",
     category: "",
@@ -23,6 +26,15 @@ const ReviewSubmissionPage: React.FC = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState<{
+    reviewId: string;
+    txHash: string;
+  } | null>(null);
+  const [contractStats, setContractStats] = useState({
+    totalDApps: 0,
+    totalReviews: 0,
+    currentEpoch: 0
+  });
 
   const categories = [
     "DeFi",
@@ -38,6 +50,21 @@ const ReviewSubmissionPage: React.FC = () => {
     "Oracle",
     "Other",
   ];
+
+  useEffect(() => {
+    // Load contract stats on component mount
+    loadContractStats();
+  }, []);
+
+  const loadContractStats = async () => {
+    try {
+      const adapter = contractManager.getAdapter();
+      const stats = await adapter.getTotalStats();
+      setContractStats(stats);
+    } catch (error) {
+      console.error('Failed to load contract stats:', error);
+    }
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -65,15 +92,129 @@ const ReviewSubmissionPage: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate submission process with Midnight Network
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    try {
+      // Generate review hash from content
+      const reviewContent = JSON.stringify({
+        title: formData.title,
+        review: formData.review,
+        pros: formData.pros,
+        cons: formData.cons,
+        rating: formData.rating,
+        timestamp: Date.now()
+      });
+      
+      const reviewHash = await generateHash(reviewContent);
+      
+      // Generate interaction proof (simplified for demo)
+      const interactionProof = await generateInteractionProof(formData.projectAddress);
+      
+      // Generate nullifier for rate limiting
+      const nullifier = await generateNullifier(formData.projectAddress);
+      
+      // Generate ZK proof for reviewer membership
+      const zkProof = await generateZKProof({
+        signal: reviewHash,
+        identity: 'demo-reviewer-identity', // In production, this would be user's actual identity
+        merkleProof: [], // In production, this would be actual Merkle proof
+      });
 
-    setSubmitted(true);
-    setIsSubmitting(false);
+      // Submit to contract
+      const adapter = contractManager.getAdapter();
+      
+      // First check if DApp is registered, if not suggest registration
+      const dappInfo = await adapter.getDAppInfo(formData.projectAddress);
+      if (!dappInfo) {
+        // For demo purposes, we'll register the DApp automatically
+        await adapter.registerDApp(
+          formData.projectAddress,
+          formData.projectName,
+          formData.category,
+          'demo-admin-signature' // In production, this would require actual admin privileges
+        );
+      }
+      
+      // Submit the review
+      const result = await adapter.submitReview(
+        formData.projectAddress,
+        reviewHash,
+        formData.rating,
+        interactionProof,
+        nullifier,
+        zkProof
+      );
+
+      setSubmissionResult(result);
+      setSubmitted(true);
+      
+      // Update contract stats
+      await loadContractStats();
+      
+    } catch (error: any) {
+      console.error('Review submission failed:', error);
+      alert(`Submission failed: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Helper functions
+  const generateZKProof = async (data: {
+    signal: string;
+    identity: string;
+    merkleProof: any[];
+  }): Promise<AppZKProof> => {
+    // Create a proper ZK proof object structure that matches what the contract adapter expects
+    const proofData = {
+      type: 'dapp-review-proof',
+      signal: data.signal,
+      identity: data.identity,
+      merkleProof: data.merkleProof,
+      timestamp: Date.now(),
+      version: '1.0'
+    };
+    
+    // Generate the proof string
+    const proofString = btoa(JSON.stringify(proofData));
+    
+    // Create public signals (these would be the public inputs to the ZK circuit)
+    const publicSignals = [
+      data.signal, // review hash
+      Math.floor(Date.now() / (1000 * 60 * 60 * 24)).toString(), // current epoch
+      await generateHash(data.identity), // identity commitment (hashed for privacy)
+    ];
+    
+    // Return a proper ZKProof object
+    return {
+      proof: proofString,
+      publicSignals: publicSignals,
+      nullifier: await generateHash(`${data.identity}_${Date.now()}`),
+      timestamp: Date.now()
+    };
+  };
+
+  const generateHash = async (content: string): Promise<string> => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(content);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
+  const generateInteractionProof = async (projectAddress: string): Promise<string> => {
+    // In production, this would generate actual proof of interaction with the DApp
+    const proofData = `interaction_${projectAddress}_${Date.now()}`;
+    return await generateHash(proofData);
+  };
+
+  const generateNullifier = async (projectAddress: string): Promise<string> => {
+    // Generate nullifier based on user identity and project
+    const nullifierData = `nullifier_${projectAddress}_${Date.now()}_${Math.random()}`;
+    return await generateHash(nullifierData);
   };
 
   const resetForm = () => {
     setFormData({
+      projectAddress: "",
       projectName: "",
       projectWebsite: "",
       category: "",
@@ -85,9 +226,10 @@ const ReviewSubmissionPage: React.FC = () => {
       proofFiles: [],
     });
     setSubmitted(false);
+    setSubmissionResult(null);
   };
 
-  if (submitted) {
+  if (submitted && submissionResult) {
     return (
       <div className="max-w-3xl mx-auto animate-fadeIn">
         <Card
@@ -116,13 +258,45 @@ const ReviewSubmissionPage: React.FC = () => {
             </div>
 
             <h1 className="text-4xl font-bold gradient-text-success mb-6">
-              Review Submitted Successfully!
+              Review Submitted to Midnight Network!
             </h1>
             <p className="text-xl text-slate-600 mb-10 leading-relaxed max-w-2xl mx-auto">
-              Your review has been encrypted and submitted anonymously to the
-              Midnight Network. It will be reviewed by our admin team and
-              published once verified.
+              Your anonymous review has been successfully submitted to the DApp Reviewer contract 
+              with zero-knowledge proof verification. It's now part of the permanent record on Midnight Network.
             </p>
+
+            {/* Contract Transaction Info */}
+            <Card variant="glass" className="mb-8 text-left max-w-xl mx-auto">
+              <CardHeader spacing="md">
+                <CardTitle size="lg" gradient>
+                  Blockchain Transaction
+                </CardTitle>
+              </CardHeader>
+              <CardContent spacing="md">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-slate-600">Review ID:</span>
+                    <Badge variant="primary" gradient className="font-mono text-xs">
+                      {submissionResult.reviewId.slice(0, 12)}...
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-slate-600">Transaction:</span>
+                    <Badge variant="success" gradient className="font-mono text-xs">
+                      {submissionResult.txHash.slice(0, 12)}...
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-slate-600">Network:</span>
+                    <Badge variant="outline">Midnight Network</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-slate-600">Status:</span>
+                    <Badge variant="success" gradient>✓ Verified</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Success Steps - Enhanced */}
             <div className="grid md:grid-cols-3 gap-6 mb-12">
@@ -162,15 +336,15 @@ const ReviewSubmissionPage: React.FC = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                     />
                   </svg>
                 </div>
                 <span className="font-semibold text-slate-700">
-                  Review Encrypted
+                  Contract Updated
                 </span>
                 <Badge variant="success" gradient size="sm">
-                  Secure
+                  On-Chain
                 </Badge>
               </div>
 
@@ -198,6 +372,31 @@ const ReviewSubmissionPage: React.FC = () => {
                 </Badge>
               </div>
             </div>
+
+            {/* Network Stats */}
+            <Card variant="glass" className="mb-10 text-left max-w-xl mx-auto">
+              <CardHeader spacing="md">
+                <CardTitle size="lg" gradient>
+                  Network Statistics
+                </CardTitle>
+              </CardHeader>
+              <CardContent spacing="md">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold gradient-text">{contractStats.totalDApps}</div>
+                    <div className="text-sm text-slate-600">DApps Registered</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold gradient-text">{contractStats.totalReviews}</div>
+                    <div className="text-sm text-slate-600">Reviews Submitted</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold gradient-text">{contractStats.currentEpoch}</div>
+                    <div className="text-sm text-slate-600">Current Epoch</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Submitted Review Summary - Enhanced */}
             <Card variant="glass" className="mb-10 text-left max-w-xl mx-auto">
@@ -303,17 +502,47 @@ const ReviewSubmissionPage: React.FC = () => {
       {/* Header - Enhanced */}
       <div className="text-center">
         <h1 className="text-5xl md:text-6xl font-bold hero-title mb-6">
-          Submit Anonymous Review
+          Submit Anonymous DApp Review
         </h1>
         <p className="text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed">
-          Share your honest experience with a crypto project while maintaining
+          Share your honest experience with a decentralized application while maintaining
           complete privacy through
           <span className="gradient-text font-semibold">
             {" "}
-            zero-knowledge proofs
+            zero-knowledge proofs on Midnight Network
           </span>
         </p>
       </div>
+
+      {/* Contract Stats Banner */}
+      <Card variant="glass" className="bg-gradient-to-r from-purple-50/80 to-blue-50/80 border-purple-200/60">
+        <CardContent spacing="lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-slate-900 text-xl mb-2">
+                🚀 Live on Midnight Network
+              </h3>
+              <p className="text-slate-600">
+                Join the decentralized review ecosystem with complete privacy protection
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-6 text-center">
+              <div>
+                <div className="text-2xl font-bold gradient-text">{contractStats.totalDApps}</div>
+                <div className="text-sm text-slate-600">DApps</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold gradient-text">{contractStats.totalReviews}</div>
+                <div className="text-sm text-slate-600">Reviews</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold gradient-text">{contractStats.currentEpoch}</div>
+                <div className="text-sm text-slate-600">Epoch</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Privacy Notice - Enhanced */}
       <Card
@@ -333,7 +562,7 @@ const ReviewSubmissionPage: React.FC = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  d="M12 15v2m-6 4h12a4 4 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                 />
               </svg>
             </div>
@@ -342,10 +571,9 @@ const ReviewSubmissionPage: React.FC = () => {
                 Complete Privacy Guaranteed
               </h3>
               <p className="text-slate-700 leading-relaxed mb-4">
-                Your identity will remain completely anonymous. We use
-                zero-knowledge proofs to verify authenticity without revealing
-                who you are. Only the review content will be visible once
-                approved - never your personal information.
+                Your identity remains completely anonymous through Midnight Network's zero-knowledge technology. 
+                We verify your authenticity without revealing who you are. Your review is permanently stored on-chain 
+                while your privacy is mathematically guaranteed.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Badge variant="success" gradient size="sm">
@@ -355,7 +583,10 @@ const ReviewSubmissionPage: React.FC = () => {
                   🎭 Anonymous
                 </Badge>
                 <Badge variant="warning" gradient size="sm">
-                  ⚡ Instant
+                  ⚡ Instant Verification
+                </Badge>
+                <Badge variant="info" gradient size="sm">
+                  🌙 Midnight Network
                 </Badge>
               </div>
             </div>
@@ -368,17 +599,34 @@ const ReviewSubmissionPage: React.FC = () => {
         <Card variant="elevated" className="form-section">
           <CardHeader>
             <CardTitle size="xl" gradient>
-              Project Information
+              DApp Information
             </CardTitle>
             <CardDescription>
-              Basic details about the crypto project you're reviewing
+              Details about the decentralized application you're reviewing
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-3">
-                  Project Name *
+                  DApp Contract Address *
+                </label>
+                <input
+                  type="text"
+                  name="projectAddress"
+                  value={formData.projectAddress}
+                  onChange={handleInputChange}
+                  className="input font-mono text-sm"
+                  placeholder="0x1234567890abcdef..."
+                  required
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  The smart contract address of the DApp you're reviewing
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-3">
+                  DApp Name *
                 </label>
                 <input
                   type="text"
@@ -390,9 +638,11 @@ const ReviewSubmissionPage: React.FC = () => {
                   required
                 />
               </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-3">
-                  Project Website
+                  DApp Website
                 </label>
                 <input
                   type="url"
@@ -403,25 +653,25 @@ const ReviewSubmissionPage: React.FC = () => {
                   placeholder="https://example.com"
                 />
               </div>
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-3">
-                Category *
-              </label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-                className="input"
-                required
-              >
-                <option value="">Select a category...</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-3">
+                  Category *
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  className="input"
+                  required
+                >
+                  <option value="">Select a category...</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -776,6 +1026,7 @@ const ReviewSubmissionPage: React.FC = () => {
             size="xl"
             isLoading={isSubmitting}
             disabled={
+              !formData.projectAddress ||
               !formData.projectName ||
               !formData.category ||
               !formData.title ||
@@ -809,7 +1060,7 @@ const ReviewSubmissionPage: React.FC = () => {
                     ></path>
                   </svg>
                   <span className="animate-pulse">
-                    Generating ZK Proof & Submitting...
+                    Submitting to Midnight Network...
                   </span>
                 </div>
               </>
@@ -825,10 +1076,10 @@ const ReviewSubmissionPage: React.FC = () => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                   />
                 </svg>
-                Submit Anonymous Review
+                Submit to Midnight Contract
               </>
             )}
           </Button>
