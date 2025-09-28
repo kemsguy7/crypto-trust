@@ -1,0 +1,32 @@
+{
+  "type": "midnight_contract",
+  "version": "1.0.0",
+  "name": "dapp_reviewer",
+  "description": "DApp Review Registry Contract with ZK Proofs",
+  "circuits": [
+    "updateEpoch",
+    "registerDApp",
+    "submitReview",
+    "updateReviewerRoot",
+    "addModerator",
+    "flagReview",
+    "getDAppInfo",
+    "getTotalStats",
+    "isNullifierUsed"
+  ],
+  "witnesses": [
+    "adminSecretKey",
+    "reviewerIdentitySecret",
+    "reviewerMerklePath",
+    "reviewerMerkleIndices",
+    "reviewContent"
+  ],
+  "structs": [
+    "DAppInfo",
+    "ReviewRecord"
+  ],
+  "constraints": 13,
+  "compiledAt": "2025-09-30T16:29:49.218Z",
+  "compiler": "midnight-compact-compiler",
+  "compilerVersion": "0.1.0"
+}

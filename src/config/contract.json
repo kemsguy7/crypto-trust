@@ -1,0 +1,7 @@
+{
+  "contractAddress": "0x2013652ef722777f25a40ebb1d26d5fc537373d7",
+  "networkId": 31337,
+  "rpcUrl": "http://localhost:8545",
+  "artifactsPath": "/zk-artifacts/",
+  "deployedAt": 1759250333192
+}

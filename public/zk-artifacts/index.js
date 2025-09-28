@@ -1,13 +1,13 @@
-// Auto-generated index for ZK artifacts
+// Auto-generated index for Compact contract artifacts
 export const ARTIFACTS_PATH = '/zk-artifacts';
 
-export const CIRCUITS = {
-  membership_rln: {
-    metadata: '/zk-artifacts/membership_rln.metadata.json',
-    provingKey: '/zk-artifacts/membership_rln.proving_key.json',
-    verificationKey: '/zk-artifacts/membership_rln.verification_key.json',
-    wasm: '/zk-artifacts/membership_rln.wasm.json'
+export const CONTRACTS = {
+  dapp_reviewer: {
+    contract: '/zk-artifacts/dapp_reviewer.contract.json',
+    provingKey: '/zk-artifacts/dapp_reviewer.proving_key.json',
+    verificationKey: '/zk-artifacts/dapp_reviewer.verification_key.json',
+    wasm: '/zk-artifacts/dapp_reviewer.wasm.json'
   }
 };
 
-export default CIRCUITS;
+export default CONTRACTS;

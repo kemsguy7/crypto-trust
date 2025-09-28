@@ -1,0 +1,17 @@
+{
+  "type": "midnight_wasm",
+  "version": "1.0.0",
+  "contract": "dapp_reviewer",
+  "exports": [
+    "updateEpoch",
+    "registerDApp",
+    "submitReview",
+    "updateReviewerRoot",
+    "addModerator",
+    "flagReview",
+    "getDAppInfo",
+    "getTotalStats",
+    "isNullifierUsed"
+  ],
+  "bytecode": "eyJjb250cmFjdCI6ImRhcHBfcmV2aWV3ZXIiLCJjaXJjdWl0cyI6WyJ1cGRhdGVFcG9jaCIsInJlZ2lzdGVyREFwcCIsInN1Ym1pdFJldmlldyIsInVwZGF0ZVJldmlld2VyUm9vdCIsImFkZE1vZGVyYXRvciIsImZsYWdSZXZpZXciLCJnZXREQXBwSW5mbyIsImdldFRvdGFsU3RhdHMiLCJpc051bGxpZmllclVzZWQiXSwibW9jayI6dHJ1ZSwidGltZXN0YW1wIjoxNzU5MjQ5Nzg5MjIyfQ=="
+}

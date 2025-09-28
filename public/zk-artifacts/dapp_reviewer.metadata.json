@@ -1,0 +1,22 @@
+{
+  "name": "dapp_reviewer",
+  "description": "DApp Review Registry Contract with ZK Proofs",
+  "version": "1.0.0",
+  "compiledAt": "2025-09-30T16:17:24.432Z",
+  "compiler": "midnight-compiler-mock",
+  "compilerVersion": "0.1.0",
+  "signals": [],
+  "functions": [],
+  "constraints": 0,
+  "artifacts": {
+    "provingKey": "dapp_reviewer.proving_key.json",
+    "verificationKey": "dapp_reviewer.verification_key.json",
+    "wasm": "dapp_reviewer.wasm.json"
+  },
+  "poseidonParams": {
+    "rounds": 8,
+    "fullRounds": 8,
+    "partialRounds": 57,
+    "sboxPower": 5
+  }
+}

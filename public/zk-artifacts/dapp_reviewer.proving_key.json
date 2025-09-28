@@ -1,0 +1,44 @@
+{
+  "type": "midnight_proving_key",
+  "version": "1.0.0",
+  "contract": "dapp_reviewer",
+  "curve": "bn254",
+  "protocol": "groth16",
+  "circuits": [
+    "updateEpoch",
+    "registerDApp",
+    "submitReview",
+    "updateReviewerRoot",
+    "addModerator",
+    "flagReview",
+    "getDAppInfo",
+    "getTotalStats",
+    "isNullifierUsed"
+  ],
+  "alpha": "0xe4737b4f0e8775a342d186844dc60e35898ffc2a1a9a588917e07f1007621616",
+  "beta": "0xc51074168899e49d2a3e4ab61281c38db3a354e4edc8c8c4a11ee953d5cbd92a",
+  "gamma": "0xe4d39138fdc3fba3884278f289c9186706e608e7eee3708dd0f4f62a0d9b56a8",
+  "delta": "0x325f06354e518955994da652eef0d25edb961edc466d94b508eaf80d02463635",
+  "ic": [
+    {
+      "x": "0x91bcc7aa5e450aa7a5861347a42f3c89c6920c6f306d2c925144821a0fe55e2d",
+      "y": "0x6568e4b1fc69ffce3845d4f5e653985e64ec77a9875061a1293c5ea7999a0c3c"
+    },
+    {
+      "x": "0xd4377a5cba512b91eac1354623d9f22cc4dd18e5a1d75a7f2a1842397c704b1b",
+      "y": "0x8dad02925dcd94f6f2ad160bf6d9975f1a27543f0877815b2e2d4c5bcd7d4eb1"
+    },
+    {
+      "x": "0x24a8096ac47b6e2966912eb820243cb17845d59b7da77fe93f0d831af7e186ff",
+      "y": "0x6223d6c0065a9bbf0bd902bb05e3e28f9163318022d2ee5c18eca7684d77b4b6"
+    },
+    {
+      "x": "0xb88d791a74b2355ac21dca9917453edee6de3f3f062abc271c6ad27ca28c9e6b",
+      "y": "0xd8fd414a5fe368e9fe7f6bc4953221ea72c893e6d99ea133ed65411709fa97dd"
+    },
+    {
+      "x": "0x4a8b46103212eac8ee5452b3ec0d301900f9414d42b49e3b23f933d7eba15c06",
+      "y": "0x39e7c96bcd8095374932d32e8f96309b9872e9cb061ae020d701700f755f50e2"
+    }
+  ]
+}
