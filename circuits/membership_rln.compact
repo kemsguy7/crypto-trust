@@ -1,0 +1,107 @@
+// Anonymous Whistleblower Membership & Rate-Limit Circuit
+// Implements ZK proof of organization membership with epoch-based rate limiting
+
+circuit MembershipRLN {
+    // Public inputs
+    signal input merkleRoot;     // Root of organization member tree
+    signal input epoch;           // Current time epoch for rate limiting
+    signal input nullifier;       // Rate limit nullifier (prevents double posting)
+    signal input signalHash;      // Optional binding to message hash
+    
+    // Private inputs
+    signal input identitySecret;  // User's secret identity
+    signal input[20] merklePath;  // Merkle proof path (depth 20 = 1M members)
+    signal input[20] merkleIndices; // Path indices for tree traversal
+    signal input messageHash;      // Optional message to bind proof to
+    
+    // Intermediate signals
+    signal identityCommitment;
+    signal computedNullifier;
+    signal computedRoot;
+    
+    // Compute identity commitment using Poseidon hash
+    component hasher1 = Poseidon(1);
+    hasher1.inputs[0] <== identitySecret;
+    identityCommitment <== hasher1.out;
+    
+    // Verify Merkle tree membership
+    component merkleVerifier = MerkleTreeChecker(20);
+    merkleVerifier.leaf <== identityCommitment;
+    merkleVerifier.root <== merkleRoot;
+    for (var i = 0; i < 20; i++) {
+        merkleVerifier.pathElements[i] <== merklePath[i];
+        merkleVerifier.pathIndices[i] <== merkleIndices[i];
+    }
+    
+    // Compute nullifier = Poseidon(identitySecret, epoch)
+    component hasher2 = Poseidon(2);
+    hasher2.inputs[0] <== identitySecret;
+    hasher2.inputs[1] <== epoch;
+    computedNullifier <== hasher2.out;
+    
+    // Verify nullifier matches public input
+    nullifier === computedNullifier;
+    
+    // Optional: Bind proof to specific message
+    component hasher3 = Poseidon(1);
+    hasher3.inputs[0] <== messageHash;
+    signalHash === hasher3.out;
+}
+
+// Helper template for Merkle tree verification
+template MerkleTreeChecker(levels) {
+    signal input leaf;
+    signal input root;
+    signal input pathElements[levels];
+    signal input pathIndices[levels];
+    
+    signal levelHashes[levels + 1];
+    levelHashes[0] <== leaf;
+    
+    component hashers[levels];
+    component mux[levels];
+    
+    for (var i = 0; i < levels; i++) {
+        // Select order based on path index
+        mux[i] = MultiMux(1, 2, 1);
+        mux[i].c[0][0] <== levelHashes[i];
+        mux[i].c[0][1] <== pathElements[i];
+        mux[i].c[1][0] <== pathElements[i];
+        mux[i].c[1][1] <== levelHashes[i];
+        mux[i].s <== pathIndices[i];
+        
+        // Hash the pair
+        hashers[i] = Poseidon(2);
+        hashers[i].inputs[0] <== mux[i].out[0];
+        hashers[i].inputs[1] <== mux[i].out[1];
+        levelHashes[i + 1] <== hashers[i].out;
+    }
+    
+    // Verify computed root matches
+    root === levelHashes[levels];
+}
+
+// Multiplexer for selecting hash order
+template MultiMux(n, m, w) {
+    signal input c[n][m];
+    signal input s;
+    signal output out[w];
+    
+    for (var i = 0; i < w; i++) {
+        out[i] <== c[0][i] + s * (c[1][i] - c[0][i]);
+    }
+}
+
+// Poseidon hash function wrapper
+template Poseidon(nInputs) {
+    signal input inputs[nInputs];
+    signal output out;
+    
+    // Poseidon implementation would be provided by Midnight's standard library
+    // This is a placeholder for the actual implementation
+    component hasher = PoseidonHasher(nInputs);
+    for (var i = 0; i < nInputs; i++) {
+        hasher.in[i] <== inputs[i];
+    }
+    out <== hasher.out;
+}

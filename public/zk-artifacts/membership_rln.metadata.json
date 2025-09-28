@@ -1,0 +1,97 @@
+{
+  "name": "membership_rln",
+  "description": "Anonymous Whistleblower Membership & Rate-Limit Circuit",
+  "version": "1.0.0",
+  "compiledAt": "2025-08-23T02:57:54.351Z",
+  "compiler": "midnight-compiler-mock",
+  "compilerVersion": "0.1.0",
+  "signals": [
+    {
+      "type": "input",
+      "name": "merkleRoot",
+      "size": 1
+    },
+    {
+      "type": "input",
+      "name": "epoch",
+      "size": 1
+    },
+    {
+      "type": "input",
+      "name": "nullifier",
+      "size": 1
+    },
+    {
+      "type": "input",
+      "name": "signalHash",
+      "size": 1
+    },
+    {
+      "type": "input",
+      "name": "identitySecret",
+      "size": 1
+    },
+    {
+      "type": "input",
+      "name": "messageHash",
+      "size": 1
+    },
+    {
+      "type": "input",
+      "name": "leaf",
+      "size": 1
+    },
+    {
+      "type": "input",
+      "name": "root",
+      "size": 1
+    },
+    {
+      "type": "input",
+      "name": "pathElements",
+      "size": 1
+    },
+    {
+      "type": "input",
+      "name": "pathIndices",
+      "size": 1
+    },
+    {
+      "type": "input",
+      "name": "c",
+      "size": 1
+    },
+    {
+      "type": "input",
+      "name": "s",
+      "size": 1
+    },
+    {
+      "type": "output",
+      "name": "out",
+      "size": 1
+    },
+    {
+      "type": "input",
+      "name": "inputs",
+      "size": 1
+    },
+    {
+      "type": "output",
+      "name": "out",
+      "size": 1
+    }
+  ],
+  "constraints": 3,
+  "artifacts": {
+    "provingKey": "membership_rln.proving_key.json",
+    "verificationKey": "membership_rln.verification_key.json",
+    "wasm": "membership_rln.wasm.json"
+  },
+  "poseidonParams": {
+    "rounds": 8,
+    "fullRounds": 8,
+    "partialRounds": 57,
+    "sboxPower": 5
+  }
+}

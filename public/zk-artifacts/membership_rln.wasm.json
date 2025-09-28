@@ -1,0 +1,11 @@
+{
+  "type": "midnight_wasm",
+  "version": "1.0.0",
+  "circuit": "membership_rln",
+  "exports": [
+    "generateWitness",
+    "calculatePublicSignals",
+    "verifyConstraints"
+  ],
+  "bytecode": "eyJjaXJjdWl0IjoibWVtYmVyc2hpcF9ybG4iLCJtb2NrIjp0cnVlLCJ0aW1lc3RhbXAiOjE3NTU5MTc4NzQzNTF9"
+}

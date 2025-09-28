@@ -1,0 +1,52 @@
+{
+  "name": "crypto review",
+  "version": "1.0.0",
+  "description": "The first anonymous, zero-knowledge verified review platform for crypto projects - think Trustpilot meets privacy-preserving blockchain technology",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "compile-circuits": "node scripts/compile-circuits.js"
+  },
+  "keywords": [
+    "midnight",
+    "blockchain",
+    "privacy",
+    "zero-knowledge",
+    "whistleblower",
+    "zk-proofs"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "@vercel/kv": "^3.0.0",
+    "@vercel/node": "^5.3.13",
+    "axios": "^1.6.2",
+    "clsx": "^2.1.1",
+    "crypto-js": "^4.2.0",
+    "ethers": "^6.9.0",
+    "idb": "^8.0.3",
+    "lucide-react": "^0.540.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.0",
+    "tailwind-merge": "^3.3.1",
+    "zustand": "^4.4.7"
+  },
+  "devDependencies": {
+    "@types/crypto-js": "^4.2.1",
+    "@types/node": "^24.3.0",
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.8",
+    "vitest": "^1.0.4"
+  }
+}

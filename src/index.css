@@ -1,0 +1,400 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-slate-200;
+  }
+
+  body {
+    @apply bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 text-slate-900;
+    font-family: "Inter", sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Space Grotesk", sans-serif;
+  }
+
+  /* Focus styles */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2 ring-offset-white;
+  }
+
+  /* Scrollbar styles */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+}
+
+@layer components {
+  /* Button variants - modern crypto design */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-xl text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 transform active:scale-95;
+  }
+
+  .btn-primary {
+    @apply btn bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 border border-blue-500/20;
+  }
+
+  .btn-secondary {
+    @apply btn bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-md hover:shadow-lg backdrop-blur-sm;
+  }
+
+  .btn-outline {
+    @apply btn border-2 border-blue-200 bg-white/80 text-blue-700 hover:bg-blue-50 hover:border-blue-300 backdrop-blur-sm shadow-sm hover:shadow-md;
+  }
+
+  .btn-ghost {
+    @apply btn text-slate-600 hover:bg-white/60 hover:text-slate-900 backdrop-blur-sm;
+  }
+
+  .btn-success {
+    @apply btn bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-lg hover:shadow-xl shadow-emerald-500/25;
+  }
+
+  .btn-danger {
+    @apply btn bg-gradient-to-r from-red-500 to-pink-500 text-white hover:from-red-600 hover:to-pink-600 shadow-lg hover:shadow-xl shadow-red-500/25;
+  }
+
+  /* Input styles - refined */
+  .input {
+    @apply flex h-12 w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-3 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 backdrop-blur-sm shadow-sm hover:shadow-md;
+  }
+
+  .textarea {
+    @apply flex min-h-[100px] w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-3 text-sm ring-offset-white placeholder:text-slate-400 hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none transition-all duration-200 backdrop-blur-sm shadow-sm hover:shadow-md;
+  }
+
+  /* Card styles - modern crypto design */
+  .card {
+    @apply rounded-2xl border border-white/60 bg-white/80 shadow-xl hover:shadow-2xl transition-all duration-300 backdrop-blur-md hover:-translate-y-1;
+  }
+
+  .card-elevated {
+    @apply rounded-2xl border border-white/60 bg-gradient-to-br from-white/90 to-white/70 shadow-2xl hover:shadow-3xl transition-all duration-300 backdrop-blur-lg hover:-translate-y-2;
+  }
+
+  .card-glass {
+    @apply rounded-2xl border border-white/40 bg-white/60 shadow-xl hover:shadow-2xl transition-all duration-300 backdrop-blur-xl hover:-translate-y-1;
+  }
+
+  .card-header {
+    @apply flex flex-col space-y-2 p-8;
+  }
+
+  .card-title {
+    @apply text-2xl font-bold leading-tight tracking-tight text-slate-900;
+    font-family: "Space Grotesk", sans-serif;
+  }
+
+  .card-description {
+    @apply text-slate-600 leading-relaxed;
+  }
+
+  .card-content {
+    @apply p-8 pt-0;
+  }
+
+  .card-footer {
+    @apply flex items-center p-8 pt-0;
+  }
+
+  /* Badge styles - colorful crypto badges */
+  .badge {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  }
+
+  .badge-default {
+    @apply badge border border-slate-200 text-slate-700 bg-white/80 shadow-sm;
+  }
+
+  .badge-primary {
+    @apply badge bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md;
+  }
+
+  .badge-secondary {
+    @apply badge bg-slate-100 text-slate-700 shadow-sm;
+  }
+
+  .badge-outline {
+    @apply badge border border-slate-300 bg-white/60 text-slate-600 backdrop-blur-sm;
+  }
+
+  .badge-success {
+    @apply badge bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md;
+  }
+
+  .badge-warning {
+    @apply badge bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md;
+  }
+
+  .badge-danger {
+    @apply badge bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-md;
+  }
+
+  /* Alert styles - modern alerts */
+  .alert {
+    @apply relative w-full rounded-xl border p-6 backdrop-blur-sm;
+  }
+
+  .alert-default {
+    @apply alert border-slate-200 bg-white/80 shadow-lg;
+  }
+
+  .alert-info {
+    @apply alert border-blue-200 bg-blue-50/80 shadow-lg;
+  }
+
+  .alert-success {
+    @apply alert border-emerald-200 bg-emerald-50/80 shadow-lg;
+  }
+
+  .alert-warning {
+    @apply alert border-amber-200 bg-amber-50/80 shadow-lg;
+  }
+
+  .alert-danger {
+    @apply alert border-red-200 bg-red-50/80 shadow-lg;
+  }
+
+  /* Progress styles */
+  .progress {
+    @apply relative h-3 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner;
+  }
+
+  .progress-bar {
+    @apply h-full w-full flex-1 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ease-out shadow-sm;
+  }
+
+  /* Rating stars */
+  .star-rating {
+    @apply text-amber-400 hover:text-amber-500 transition-all duration-200 cursor-pointer transform hover:scale-110 drop-shadow-sm;
+  }
+
+  .star-rating-inactive {
+    @apply text-slate-300 hover:text-amber-300 transition-all duration-200 cursor-pointer transform hover:scale-110;
+  }
+
+  /* Navigation styles */
+  .nav-bubble {
+    @apply bg-white/80 backdrop-blur-md border border-white/60 shadow-xl rounded-full;
+  }
+
+  .nav-link {
+    @apply px-6 py-3 text-sm font-medium rounded-full transition-all duration-300;
+  }
+
+  .nav-link-active {
+    @apply nav-link bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg;
+  }
+
+  .nav-link-inactive {
+    @apply nav-link text-slate-600 hover:text-slate-900 hover:bg-white/60;
+  }
+
+  /* Skeleton loader */
+  .skeleton {
+    @apply animate-pulse rounded-xl bg-slate-200;
+  }
+
+  /* Divider */
+  .divider {
+    @apply my-6 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent;
+  }
+
+  /* Hero section styles */
+  .hero-gradient {
+    @apply bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50;
+  }
+
+  .hero-title {
+    @apply bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent;
+    font-family: "Space Grotesk", sans-serif;
+  }
+
+  /* Project card styles */
+  .project-card {
+    @apply card-elevated hover:shadow-blue-500/20 border-l-4 border-l-blue-500;
+  }
+
+  .project-card-featured {
+    @apply card-elevated hover:shadow-purple-500/20 border-l-4 border-l-purple-500 bg-gradient-to-br from-white/95 to-purple-50/80;
+  }
+
+  /* File upload styles */
+  .upload-zone {
+    @apply border-2 border-dashed border-blue-300 rounded-2xl p-8 text-center hover:border-blue-400 hover:bg-blue-50/50 transition-all duration-300 bg-white/60 backdrop-blur-sm;
+  }
+
+  .upload-zone-active {
+    @apply upload-zone border-blue-500 bg-blue-50 shadow-lg;
+  }
+
+  /* Form section styles */
+  .form-section {
+    @apply card-elevated space-y-6;
+  }
+
+  /* Stats card styles */
+  .stats-card {
+    @apply card text-center hover:shadow-blue-500/20;
+  }
+
+  .stats-number {
+    @apply text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent;
+    font-family: "Space Grotesk", sans-serif;
+  }
+
+  /* Review card styles */
+  .review-card {
+    @apply card hover:shadow-lg border-l-4 border-l-emerald-400;
+  }
+
+  .review-card-pending {
+    @apply card hover:shadow-lg border-l-4 border-l-amber-400;
+  }
+
+  .review-card-rejected {
+    @apply card hover:shadow-lg border-l-4 border-l-red-400;
+  }
+}
+
+@layer utilities {
+  /* Hover lift effect */
+  .hover-lift {
+    @apply transition-transform duration-300 hover:-translate-y-2;
+  }
+
+  /* Smooth transitions */
+  .transition-smooth {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  /* Glass effect */
+  .glass {
+    @apply bg-white/80 backdrop-blur-md border border-white/60;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent;
+  }
+
+  .gradient-text-success {
+    @apply bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent;
+  }
+
+  .gradient-text-warning {
+    @apply bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent;
+  }
+
+  .gradient-text-danger {
+    @apply bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent;
+  }
+
+  /* Fade in animation */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  /* Pulse animation for loading */
+  @keyframes pulse-slow {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 2s ease-in-out infinite;
+  }
+
+  /* Background patterns */
+  .bg-dots {
+    background-image: radial-gradient(circle, #e2e8f0 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .bg-grid {
+    background-image: linear-gradient(
+        rgba(148, 163, 184, 0.1) 1px,
+        transparent 1px
+      ),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Shadow utilities */
+  .shadow-3xl {
+    box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.25);
+  }
+
+  .shadow-colored {
+    box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.1),
+      0 10px 10px -5px rgba(59, 130, 246, 0.04);
+  }
+
+  .shadow-colored-hover {
+    box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.25),
+      0 20px 25px -5px rgba(59, 130, 246, 0.1);
+  }
+
+  /* Special effects */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.2) 20%,
+      rgba(255, 255, 255, 0.5) 60%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+}

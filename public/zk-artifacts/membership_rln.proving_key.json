@@ -1,0 +1,46 @@
+{
+  "type": "midnight_proving_key",
+  "version": "1.0.0",
+  "circuit": "membership_rln",
+  "curve": "bn254",
+  "protocol": "groth16",
+  "publicInputs": [
+    "merkleRoot",
+    "epoch",
+    "nullifier",
+    "signalHash"
+  ],
+  "privateInputs": [
+    "identitySecret",
+    "merklePath",
+    "merkleIndices",
+    "messageHash"
+  ],
+  "constraints": 3,
+  "alpha": "0xbecd0ccb628b7da899039833b9ba0b573129f03093508b6b35ee1189d3e35225",
+  "beta": "0x3d1af814e9e325465a3cec0a46a7ff05b9bccf89920396bb1395604abd7b84ed",
+  "gamma": "0x938ba04d1b76666b44450d8868732729802a7f99c094cb9357d837b47cde5515",
+  "delta": "0x73c1846600d5242d016dae8b5a22904e043bd8483604ff305827f98cb1f612eb",
+  "ic": [
+    {
+      "x": "0xc67bbd96ac2da0034d5fbca1d0f12337bbae7f332bb9012e66db017948dddb56",
+      "y": "0xcf46986e99092d9311fac45edb089b0bbb1b9f21c64c2c44d5a6ff799cef2e3d"
+    },
+    {
+      "x": "0xc14935f2f56c37f047a2c3ceb1c3853ce5d7cd718f6f18063854ec34e268131f",
+      "y": "0xc6b05f614f7933535a39d01a5b28c8e2d4504c8bdd78dcb688e250f5ea3498d3"
+    },
+    {
+      "x": "0xd56322c3abdbd07db6fc13c1b9d5551082ce7d03eefe95209cc003dab1d43f69",
+      "y": "0xdb374d26ceb3d279c9051843b7569d9dac944b94a97bc3bfd7e4733d6c4e34ee"
+    },
+    {
+      "x": "0x887ae237be181afe6bdd65d77d3204b73c50c0cfb0641357a7eef8bd99880e17",
+      "y": "0x1d9b29e72a7240a3c41311c98449a0f709353e286701e36ff8f711ff0a5d4573"
+    },
+    {
+      "x": "0x2f5bd1fc786bc548400793866a8c3b7665582e8ff13e009566a0adb953c8fd84",
+      "y": "0x83b196a37b01e866369f7326360e2f8a85bab333e048bd6e7c14d5a4e3eba7cc"
+    }
+  ]
+}
