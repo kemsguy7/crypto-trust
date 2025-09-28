@@ -1,0 +1,305 @@
+import CompactStandardLibrary as std;
+
+// DApp Review Registry Contract for Midnight Network
+// Manages dApp registrations and verified reviews with zero-knowledge proofs
+
+export enum DAPP_STATUS {
+    INACTIVE,
+    ACTIVE,
+    SUSPENDED,
+}
+
+export enum REVIEW_STATUS {
+    PENDING,
+    VERIFIED,
+    FLAGGED,
+}
+
+// DApp registration data structure
+export struct DAppInfo {
+    address: Bytes<32>,
+    name: Bytes<32>,           // Encoded dApp name
+    category: Bytes<16>,       // Category identifier
+    registrationEpoch: Unsigned,
+    status: DAPP_STATUS,
+    totalReviews: Unsigned,
+    averageRating: Unsigned,   // Rating * 100 for precision (100-1000 = 1.00-10.00)
+    reputationScore: Unsigned,
+}
+
+// Review data structure
+export struct ReviewRecord {
+    dappAddress: Bytes<32>,
+    reviewHash: Bytes<32>,     // Hash of review content
+    rating: Unsigned,          // 1-10 scale
+    epoch: Unsigned,
+    timestamp: Unsigned,
+    nullifierHash: Bytes<32>,
+    interactionProof: Bytes<32>,
+    status: REVIEW_STATUS,
+}
+
+// Ledger state - what's stored on-chain
+export ledger dappRegistry {
+    // Admin and configuration
+    adminPublicKey: Bytes<32>;
+    reviewerMerkleRoot: Bytes<32>;
+    epochDuration: Unsigned;
+    currentEpoch: Unsigned;
+    
+    // Global counters
+    totalDApps: std.Counter<Unsigned>;
+    totalReviews: std.Counter<Unsigned>;
+    
+    // DApp registry - maps dApp address to info
+    dapps: std.Map<Bytes<32>, DAppInfo>;
+    
+    // Review tracking - maps review ID to review record
+    reviews: std.Map<Bytes<32>, ReviewRecord>;
+    
+    // Nullifier tracking for rate limiting - maps nullifier to epoch/dapp
+    usedNullifiers: std.Set<Bytes<32>>;
+    
+    // Moderator set
+    moderators: std.Set<Bytes<32>>;
+    
+    constructor(
+        adminKey: Bytes<32>,
+        initialMerkleRoot: Bytes<32>,
+        epochDur: Unsigned
+    ) {
+        adminPublicKey = adminKey;
+        reviewerMerkleRoot = initialMerkleRoot;
+        epochDuration = epochDur;
+        currentEpoch = 0u;
+    }
+}
+
+// Witnesses - private inputs from users/DApp
+witness adminSecretKey(): Bytes<32>;
+witness reviewerIdentitySecret(): Bytes<32>;
+witness reviewerMerklePath(): Bytes<20>[20]; // Merkle proof path
+witness reviewerMerkleIndices(): Boolean[20]; // Path directions
+witness reviewContent(): Opaque; // Private review content
+
+// Update current epoch based on time
+export circuit updateEpoch(): Void {
+    // In production, this would use actual timestamp
+    // For demo, we'll increment manually
+    ledger.currentEpoch = ledger.currentEpoch + 1u;
+}
+
+// Register a new dApp (admin only)
+export circuit registerDApp(
+    dappAddress: Bytes<32>,
+    name: Bytes<32>,
+    category: Bytes<16>
+): Void {
+    // Verify admin signature (simplified - in production use proper ECDSA)
+    let adminPubKey = std.persistentHash("admin", adminSecretKey());
+    assert(adminPubKey == ledger.adminPublicKey, "Only admin can register dApps");
+    
+    // Check dApp not already registered
+    assert(!ledger.dapps.has(dappAddress), "DApp already registered");
+    
+    // Create new dApp info
+    let dappInfo = DAppInfo {
+        address: dappAddress,
+        name: name,
+        category: category,
+        registrationEpoch: ledger.currentEpoch,
+        status: DAPP_STATUS.ACTIVE,
+        totalReviews: 0u,
+        averageRating: 0u,
+        reputationScore: 0u,
+    };
+    
+    // Store dApp info and increment counter
+    ledger.dapps.set(dappAddress, dappInfo);
+    ledger.totalDApps.increment();
+}
+
+// Submit a verified review with ZK proof
+export circuit submitReview(
+    pub dappAddress: Bytes<32>,
+    pub reviewHash: Bytes<32>,
+    pub rating: Unsigned,
+    pub interactionProof: Bytes<32>,
+    pub nullifier: Bytes<32>
+): Void {
+    // Verify dApp is registered and active
+    assert(ledger.dapps.has(dappAddress), "DApp not registered");
+    let dapp = ledger.dapps.get(dappAddress);
+    assert(dapp.status == DAPP_STATUS.ACTIVE, "DApp not active");
+    
+    // Verify rating is in valid range (1-10)
+    assert(rating >= 1u && rating <= 10u, "Rating must be 1-10");
+    
+    // Check nullifier hasn't been used
+    let nullifierKey = std.persistentHash(disclose(dappAddress) + disclose(nullifier), "");
+    assert(!ledger.usedNullifiers.has(nullifierKey), "Review already submitted");
+    
+    // Verify membership in reviewer set using Merkle proof
+    let identityCommitment = std.persistentHash("identity", reviewerIdentitySecret());
+    let merkleRoot = verifyMerkleProof(
+        identityCommitment,
+        reviewerMerklePath(),
+        reviewerMerkleIndices()
+    );
+    assert(merkleRoot == ledger.reviewerMerkleRoot, "Invalid reviewer proof");
+    
+    // Verify nullifier is correctly generated
+    let expectedNullifier = std.persistentHash(
+        disclose(ledger.currentEpoch) + disclose(dappAddress),
+        reviewerIdentitySecret()
+    );
+    assert(expectedNullifier == nullifier, "Invalid nullifier");
+    
+    // Create review record
+    let reviewId = std.persistentHash(disclose(nullifier) + disclose(reviewHash), "");
+    let review = ReviewRecord {
+        dappAddress: dappAddress,
+        reviewHash: reviewHash,
+        rating: rating,
+        epoch: ledger.currentEpoch,
+        timestamp: ledger.currentEpoch * ledger.epochDuration, // Simplified timestamp
+        nullifierHash: std.persistentHash(disclose(nullifier), "hash"),
+        interactionProof: interactionProof,
+        status: REVIEW_STATUS.VERIFIED,
+    };
+    
+    // Store review and mark nullifier as used
+    ledger.reviews.set(reviewId, review);
+    ledger.usedNullifiers.add(nullifierKey);
+    
+    // Update dApp statistics
+    updateDAppStats(dappAddress, rating);
+    
+    // Increment global review counter
+    ledger.totalReviews.increment();
+}
+
+// Update reviewer Merkle root (admin only)
+export circuit updateReviewerRoot(newRoot: Bytes<32>): Void {
+    // Verify admin signature
+    let adminPubKey = std.persistentHash("admin", adminSecretKey());
+    assert(adminPubKey == ledger.adminPublicKey, "Only admin can update root");
+    
+    ledger.reviewerMerkleRoot = newRoot;
+}
+
+// Add moderator (admin only)
+export circuit addModerator(moderatorKey: Bytes<32>): Void {
+    // Verify admin signature
+    let adminPubKey = std.persistentHash("admin", adminSecretKey());
+    assert(adminPubKey == ledger.adminPublicKey, "Only admin can add moderators");
+    
+    ledger.moderators.add(moderatorKey);
+}
+
+// Flag review (moderator only)
+export circuit flagReview(reviewId: Bytes<32>): Void {
+    // Verify moderator
+    let modPubKey = std.persistentHash("moderator", adminSecretKey()); // Simplified
+    assert(ledger.moderators.has(modPubKey), "Only moderators can flag reviews");
+    
+    // Update review status
+    assert(ledger.reviews.has(reviewId), "Review not found");
+    let mut review = ledger.reviews.get(reviewId);
+    review.status = REVIEW_STATUS.FLAGGED;
+    ledger.reviews.set(reviewId, review);
+}
+
+// View functions
+
+// Get dApp information
+export circuit getDAppInfo(dappAddress: Bytes<32>): DAppInfo {
+    assert(ledger.dapps.has(dappAddress), "DApp not found");
+    return ledger.dapps.get(dappAddress);
+}
+
+// Get total statistics
+export circuit getTotalStats(): (Unsigned, Unsigned, Unsigned) {
+    return (ledger.totalDApps.value, ledger.totalReviews.value, ledger.currentEpoch);
+}
+
+// Check if nullifier is used
+export circuit isNullifierUsed(dappAddress: Bytes<32>, nullifier: Bytes<32>): Boolean {
+    let nullifierKey = std.persistentHash(disclose(dappAddress) + disclose(nullifier), "");
+    return ledger.usedNullifiers.has(nullifierKey);
+}
+
+// Helper functions (internal, not exported)
+
+circuit verifyMerkleProof(
+    leaf: Bytes<32>,
+    path: Bytes<20>[20],
+    indices: Boolean[20]
+): Bytes<32> {
+    let mut current = leaf;
+    
+    for i in 0u..20u {
+        if indices[i] {
+            // Right path
+            current = std.persistentHash(disclose(path[i]) + disclose(current), "");
+        } else {
+            // Left path  
+            current = std.persistentHash(disclose(current) + disclose(path[i]), "");
+        }
+    }
+    
+    return current;
+}
+
+circuit updateDAppStats(dappAddress: Bytes<32>, newRating: Unsigned): Void {
+    let mut dappInfo = ledger.dapps.get(dappAddress);
+    let currentTotal = dappInfo.totalReviews;
+    let currentAverage = dappInfo.averageRating;
+    
+    // Update running average (multiply by 100 for precision)
+    let newTotal = currentTotal + 1u;
+    let newAverage = if currentTotal == 0u {
+        newRating * 100u
+    } else {
+        (currentAverage * currentTotal + newRating * 100u) / newTotal
+    };
+    
+    dappInfo.totalReviews = newTotal;
+    dappInfo.averageRating = newAverage;
+    
+    // Calculate reputation score
+    dappInfo.reputationScore = calculateReputationScore(dappInfo);
+    
+    ledger.dapps.set(dappAddress, dappInfo);
+}
+
+circuit calculateReputationScore(dappInfo: DAppInfo): Unsigned {
+    let reviewCount = dappInfo.totalReviews;
+    let avgRating = dappInfo.averageRating; // Already multiplied by 100
+    let currentEp = ledger.currentEpoch;
+    let regEpoch = dappInfo.registrationEpoch;
+    
+    // Base score from rating and review count
+    // Simplified logarithmic approximation
+    let logApprox = if reviewCount == 0u { 0u } else {
+        if reviewCount <= 1u { 0u } else {
+            if reviewCount <= 2u { 69u } else {  // ln(2) * 100
+                if reviewCount <= 7u { 194u } else {  // ln(7) * 100
+                    if reviewCount <= 20u { 299u } else { 399u }  // ln(20) * 100, ln(55) * 100
+                }
+            }
+        }
+    };
+    
+    let baseScore = (avgRating * logApprox) / 10000u; // Adjust for double multiplication
+    
+    // Longevity bonus (max 200 points)
+    let ageBonus = if currentEp > regEpoch {
+        let age = currentEp - regEpoch;
+        if age * 10u > 200u { 200u } else { age * 10u }
+    } else { 0u };
+    
+    // Final reputation score (max 10000 = 100.00)
+    let reputation = baseScore + ageBonus;
+    if reputation > 10000u { 10000u } else { reputation }
+}
